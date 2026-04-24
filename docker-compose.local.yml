@@ -106,4 +106,4 @@ networks:
   remnawave-network:
     name: remnawave-network
     driver: bridge
-#    external: true # Используем существующую сеть панели
+    external: true # Используем существующую сеть панели
