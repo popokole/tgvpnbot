@@ -858,11 +858,13 @@ class Settings(BaseSettings):
             'text_only': 'cabinet',
             'textual': 'cabinet',
             'minimal': 'cabinet',
+            'lipton': 'lipton',
+            'liptonvpn': 'lipton',
         }
 
         mode = aliases.get(normalized, normalized)
-        if mode not in {'default', 'cabinet'}:
-            raise ValueError('MAIN_MENU_MODE must be one of: default, cabinet')
+        if mode not in {'default', 'cabinet', 'lipton'}:
+            raise ValueError('MAIN_MENU_MODE must be one of: default, cabinet, lipton')
         return mode
 
     @field_validator('SERVER_STATUS_MODE', mode='before')

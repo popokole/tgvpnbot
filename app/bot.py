@@ -173,6 +173,13 @@ async def setup_bot() -> tuple[Bot, Dispatcher]:
     menu.register_handlers(dp)
     subscription.register_handlers(dp)
     balance.register_balance_handlers(dp)
+    # LiptonVPN UI handlers — регистрируем ДО прочих, чтобы их callback_data имел приоритет
+    from app.handlers.lipton_menu import register_lipton_menu_handlers
+    from app.handlers.lipton_support import register_lipton_support_handlers
+    from app.handlers.lipton_trial import register_lipton_trial_handlers
+    register_lipton_menu_handlers(dp)
+    register_lipton_support_handlers(dp)
+    register_lipton_trial_handlers(dp)
     promocode.register_handlers(dp)
     referral.register_handlers(dp)
     support.register_handlers(dp)

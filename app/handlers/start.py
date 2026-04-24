@@ -866,6 +866,14 @@ async def cmd_start(message: types.Message, state: FSMContext, db: AsyncSession,
                 subscription_is_active=subscription_is_active,
             )
 
+        if settings.MAIN_MENU_MODE == 'lipton':
+            from app.handlers.lipton_menu import send_lipton_main_menu
+            await send_lipton_main_menu(message, db, user)
+            if pinned_message and not pinned_message.send_before_menu:
+                await _send_pinned_message(message.bot, db, user, pinned_message)
+            await state.clear()
+            return
+
         user_subs = getattr(user, 'subscriptions', None) or []
         first_sub = next((s for s in user_subs if s.is_active), user_subs[0] if user_subs else None)
         keyboard = await get_main_menu_keyboard_async(

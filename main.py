@@ -26,7 +26,6 @@ from app.services.external_admin_service import ensure_external_admin_token
 from app.services.log_rotation_service import log_rotation_service
 from app.services.maintenance_service import maintenance_service
 from app.services.monitoring_service import monitoring_service
-from app.services.nalogo_queue_service import nalogo_queue_service
 from app.services.payment_service import PaymentService
 from app.services.payment_verification_service import (
     PENDING_MAX_AGE,
@@ -38,7 +37,6 @@ from app.services.payment_verification_service import (
 from app.services.referral_contest_service import referral_contest_service
 from app.services.remnawave_sync_service import remnawave_sync_service
 from app.services.reporting_service import reporting_service
-from app.services.riopay_service import riopay_service
 from app.services.system_settings_service import bot_configuration_service
 from app.services.traffic_monitoring_service import traffic_monitoring_scheduler
 from app.services.version_service import version_service
@@ -312,11 +310,6 @@ async def main():
 
         channel_subscription_service.bot = bot
 
-        # Initialize email broadcast service
-        from app.cabinet.services.email_service import email_service
-        from app.services.broadcast_service import email_broadcast_service
-
-        email_broadcast_service.set_email_service(email_service)
 
         from app.services.admin_notification_service import AdminNotificationService
 
@@ -444,10 +437,6 @@ async def main():
         payment_service = PaymentService(bot)
         auto_payment_verification_service.set_payment_service(payment_service)
 
-        # Настройка сервиса очереди чеков NaloGO
-        if payment_service.nalogo_service:
-            nalogo_queue_service.set_nalogo_service(payment_service.nalogo_service)
-            nalogo_queue_service.set_bot(bot)
 
         verification_providers: list[str] = []
         auto_verification_active = False
@@ -459,16 +448,6 @@ async def main():
             for method in SUPPORTED_MANUAL_CHECK_METHODS:
                 if method == PaymentMethod.YOOKASSA and settings.is_yookassa_enabled():
                     verification_providers.append('YooKassa')
-                elif method == PaymentMethod.MULENPAY and settings.is_mulenpay_enabled():
-                    verification_providers.append(settings.get_mulenpay_display_name())
-                elif method == PaymentMethod.PAL24 and settings.is_pal24_enabled():
-                    verification_providers.append('PayPalych')
-                elif method == PaymentMethod.WATA and settings.is_wata_enabled():
-                    verification_providers.append('WATA')
-                elif method == PaymentMethod.HELEKET and settings.is_heleket_enabled():
-                    verification_providers.append('Heleket')
-                elif method == PaymentMethod.CRYPTOBOT and settings.is_cryptobot_enabled():
-                    verification_providers.append('CryptoBot')
 
             if verification_providers:
                 hours = int(PENDING_MAX_AGE.total_seconds() // 3600)
@@ -494,26 +473,6 @@ async def main():
             if auto_verification_active:
                 stage.log('Фоновая автопроверка запущена')
 
-        async with timeline.stage(
-            'Очередь чеков NaloGO',
-            '🧾',
-            success_message='Сервис очереди чеков запущен',
-        ) as stage:
-            if settings.is_nalogo_enabled():
-                try:
-                    await nalogo_queue_service.start()
-                    if nalogo_queue_service.is_running():
-                        queue_len = await payment_service.nalogo_service.get_queue_length()
-                        if queue_len > 0:
-                            stage.log(f'В очереди ожидает {queue_len} чек(ов)')
-                        stage.success('Фоновая обработка чеков активна')
-                    else:
-                        stage.skip('Сервис не запущен')
-                except Exception as e:
-                    stage.warning(f'Ошибка запуска очереди чеков: {e}')
-                    logger.error('❌ Ошибка запуска очереди чеков NaloGO', error=e)
-            else:
-                stage.skip('NaloGO отключен настройками')
 
         async with timeline.stage(
             'Внешняя админка',
@@ -537,17 +496,7 @@ async def main():
         polling_enabled = bot_run_mode == 'polling'
         telegram_webhook_enabled = bot_run_mode == 'webhook'
 
-        payment_webhooks_enabled = any(
-            [
-                settings.TRIBUTE_ENABLED,
-                settings.is_cryptobot_enabled(),
-                settings.is_mulenpay_enabled(),
-                settings.is_yookassa_enabled(),
-                settings.is_pal24_enabled(),
-                settings.is_wata_enabled(),
-                settings.is_heleket_enabled(),
-            ]
-        )
+        payment_webhooks_enabled = settings.is_yookassa_enabled()
 
         async with timeline.stage(
             'Единый веб-сервер',
@@ -698,30 +647,8 @@ async def main():
         telegram_webhook_url = settings.get_telegram_webhook_url()
         if telegram_webhook_enabled and telegram_webhook_url:
             webhook_lines.append(f'Telegram: {telegram_webhook_url}')
-        if settings.TRIBUTE_ENABLED:
-            webhook_lines.append(f'Tribute: {_fmt(settings.TRIBUTE_WEBHOOK_PATH)}')
-        if settings.is_mulenpay_enabled():
-            webhook_lines.append(f'{settings.get_mulenpay_display_name()}: {_fmt(settings.MULENPAY_WEBHOOK_PATH)}')
-        if settings.is_cryptobot_enabled():
-            webhook_lines.append(f'CryptoBot: {_fmt(settings.CRYPTOBOT_WEBHOOK_PATH)}')
         if settings.is_yookassa_enabled():
             webhook_lines.append(f'YooKassa: {_fmt(settings.YOOKASSA_WEBHOOK_PATH)}')
-        if settings.is_pal24_enabled():
-            webhook_lines.append(f'PayPalych: {_fmt(settings.PAL24_WEBHOOK_PATH)}')
-        if settings.is_wata_enabled():
-            webhook_lines.append(f'WATA: {_fmt(settings.WATA_WEBHOOK_PATH)}')
-        if settings.is_heleket_enabled():
-            webhook_lines.append(f'Heleket: {_fmt(settings.HELEKET_WEBHOOK_PATH)}')
-        if settings.is_platega_enabled():
-            webhook_lines.append(f'Platega: {_fmt(settings.PLATEGA_WEBHOOK_PATH)}')
-        if settings.is_cloudpayments_enabled():
-            webhook_lines.append(f'CloudPayments: {_fmt(settings.CLOUDPAYMENTS_WEBHOOK_PATH)}')
-        if settings.is_freekassa_enabled():
-            webhook_lines.append(f'Freekassa: {_fmt(settings.FREEKASSA_WEBHOOK_PATH)}')
-        if settings.is_kassa_ai_enabled():
-            webhook_lines.append(f'Kassa.ai: {_fmt(settings.KASSA_AI_WEBHOOK_PATH)}')
-        if settings.is_riopay_enabled():
-            webhook_lines.append(f'RioPay: {_fmt(settings.RIOPAY_WEBHOOK_PATH)}')
         if settings.is_remnawave_webhook_enabled():
             webhook_lines.append(f'RemnaWave: {_fmt(settings.REMNAWAVE_WEBHOOK_PATH)}')
 
@@ -904,12 +831,6 @@ async def main():
             except Exception as e:
                 logger.error('Ошибка остановки сервиса ротации логов', error=e)
 
-        logger.info('ℹ️ Остановка очереди чеков NaloGO...')
-        try:
-            await nalogo_queue_service.stop()
-        except Exception as e:
-            logger.error('Ошибка остановки очереди чеков NaloGO', error=e)
-
         logger.info('ℹ️ Остановка сервиса бекапов...')
         try:
             await backup_service.stop_auto_backup()
@@ -938,11 +859,6 @@ async def main():
                 logger.info('✅ Административное веб-API остановлено')
             except Exception as error:
                 logger.error('Ошибка остановки веб-API', error=error)
-
-        try:
-            await riopay_service.close()
-        except Exception as e:
-            logger.error('Ошибка закрытия сессии RioPay', error=e)
 
         if 'bot' in locals():
             try:

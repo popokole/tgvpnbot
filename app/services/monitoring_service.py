@@ -246,6 +246,17 @@ class MonitoringService:
                 await self._check_trial_expiring_soon(db)
                 await self._check_trial_channel_subscriptions(db)
                 await self._check_expired_subscription_followups(db)
+                # LiptonVPN: напоминания за 24ч / 6ч / 1ч / 10мин
+                if self.bot:
+                    try:
+                        from app.services.expiry_reminder_service import (
+                            send_expiry_reminders,
+                            send_expired_notifications,
+                        )
+                        await send_expiry_reminders(db=db, bot=self.bot)
+                        await send_expired_notifications(db=db, bot=self.bot)
+                    except Exception as reminder_error:
+                        logger.warning('Ошибка напоминаний LiptonVPN', error=reminder_error)
                 await self._retry_stuck_guest_purchases(db)
                 await self._cleanup_inactive_users(db)
                 await self._sync_with_remnawave(db)

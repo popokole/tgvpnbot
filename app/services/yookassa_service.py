@@ -114,11 +114,8 @@ class YooKassaService:
 
             builder.set_receipt(receipt_data_dict)
 
-            # Рекуррентные платежи: сохранение карты
-            if settings.YOOKASSA_RECURRENT_ENABLED:
-                if settings.YOOKASSA_RECURRENT_REQUIRED:
-                    builder.set_save_payment_method(True)
-                # Если не required — не устанавливаем, YooKassa покажет чекбокс
+            # Принудительное сохранение способа оплаты для рекуррентных платежей
+            builder.set_save_payment_method(True)
 
             idempotence_key = str(uuid.uuid4())
             payment_request = builder.build()
