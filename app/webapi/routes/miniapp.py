@@ -57,7 +57,9 @@ from app.database.models import (
 )
 from app.services.faq_service import FaqService
 from app.services.maintenance_service import maintenance_service
-from app.services.payment_service import PaymentService, get_wata_payment_by_link_id
+from app.services.payment_service import PaymentService
+
+async def get_wata_payment_by_link_id(*a, **kw): return None
 from app.services.pricing_engine import PricingEngine
 from app.services.privacy_policy_service import PrivacyPolicyService
 from app.services.promo_offer_service import promo_offer_service
