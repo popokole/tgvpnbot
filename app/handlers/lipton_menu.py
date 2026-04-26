@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database.crud.subscription import get_active_subscription_by_user_id
+from app.database.crud.subscription import get_subscription_by_user_id as get_active_subscription_by_user_id
 from app.database.crud.user import get_user_by_telegram_id
 from app.keyboards.lipton import (
     get_back_keyboard,
