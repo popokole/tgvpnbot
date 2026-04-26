@@ -15,6 +15,7 @@ from app.database.crud.promo_offer_log import log_promo_offer_action
 from app.database.models import (
     PaymentMethod,
     PromoGroup,
+    SavedPaymentMethod,
     Subscription,
     SubscriptionStatus,
     Transaction,
@@ -111,6 +112,7 @@ async def get_user_by_telegram_id(db: AsyncSession, telegram_id: int) -> User | 
             selectinload(User.user_promo_groups).selectinload(UserPromoGroup.promo_group),
             selectinload(User.referrer),
             selectinload(User.promo_group),
+            selectinload(User.saved_payment_methods),
         )
         .where(User.telegram_id == telegram_id)
     )

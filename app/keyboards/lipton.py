@@ -5,7 +5,7 @@ from __future__ import annotations
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-def get_main_menu_keyboard(has_subscription: bool = False) -> InlineKeyboardMarkup:
+def get_main_menu_keyboard(has_subscription: bool = False, is_admin: bool = False) -> InlineKeyboardMarkup:
     buttons = []
     if not has_subscription:
         buttons.append([
@@ -22,6 +22,8 @@ def get_main_menu_keyboard(has_subscription: bool = False) -> InlineKeyboardMark
         [InlineKeyboardButton(text='🛡 Обход глушилок', callback_data='show_bypass')],
         [InlineKeyboardButton(text='💬 Поддержка',      callback_data='show_support')],
     ])
+    if is_admin:
+        buttons.append([InlineKeyboardButton(text='⚙️ Админ-панель', callback_data='admin_menu')])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 

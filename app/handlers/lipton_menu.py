@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database.crud.subscription import get_subscription_by_user_id as get_active_subscription_by_user_id
+from app.database.crud.user import get_user_by_telegram_id as _get_user_by_tg_id
 from app.database.crud.user import get_user_by_telegram_id
 from app.keyboards.lipton import (
     get_back_keyboard,
@@ -47,6 +48,7 @@ def _card_last4(user) -> str | None:
 def _build_menu_content(sub, user, name: str):
     """Возвращает (text, keyboard) для главного меню."""
     has_sub = bool(sub)
+    is_admin = settings.is_admin(user.telegram_id) if user else False
 
     if sub and sub.expire_at:
         tz = getattr(user, 'timezone', 'UTC') or 'UTC'
@@ -65,7 +67,7 @@ def _build_menu_content(sub, user, name: str):
         autopay_line += '\n'
 
     text = f'🛡 <b>LiptonVPN</b>\n\n👋 {name}, добро пожаловать!\n\n{status_text}{autopay_line}'
-    return text, get_main_menu_keyboard(has_subscription=has_sub)
+    return text, get_main_menu_keyboard(has_subscription=has_sub, is_admin=is_admin)
 
 
 # ---------------------------------------------------------------------------
