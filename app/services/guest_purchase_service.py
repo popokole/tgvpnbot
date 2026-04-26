@@ -11,8 +11,12 @@ from sqlalchemy import func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.cabinet.auth.jwt_handler import create_auto_login_token
-from app.cabinet.auth.password_utils import hash_password
+def create_auto_login_token(user_id: int) -> None:
+    return None
+
+def hash_password(password: str) -> str:
+    import hashlib
+    return hashlib.sha256(password.encode()).hexdigest()
 from app.config import settings
 from app.database.crud.landing import create_guest_purchase
 from app.database.crud.subscription import create_paid_subscription, get_subscription_by_user_id, replace_subscription
@@ -852,11 +856,6 @@ async def send_guest_notification(
         language: User language for email template (avoids lazy-loading user relationship).
         is_new_account: Whether a new cabinet account / password was just created.
     """
-    # Lazy imports to avoid circular dependencies (cabinet services -> services -> cabinet)
-    from app.cabinet.services.email_service import email_service
-    from app.cabinet.services.email_templates import EmailNotificationTemplates
-    from app.services.notification_delivery_service import NotificationType
-
     recipient_type, recipient_value = _get_recipient_contact(purchase)
 
     if recipient_type == 'telegram':
@@ -865,6 +864,8 @@ async def send_guest_notification(
                 purchase, is_pending_activation=is_pending_activation, tariff_name=tariff_name
             )
         return
+
+    # Email notifications require Cabinet — no-op since Cabinet removed
 
     recipient_email = recipient_value
     if recipient_type != 'email':
@@ -901,7 +902,7 @@ async def send_guest_notification(
     # Check DB override first, then fall back to hardcoded template
     template = None
     try:
-        from app.cabinet.services.email_template_overrides import get_rendered_override
+        raise ImportError('Cabinet removed')
 
         rendered = await get_rendered_override(notification_type.value, language, context)
         if rendered:
@@ -945,7 +946,7 @@ async def send_guest_notification(
     if purchase.cabinet_password:
         cred_template = None
         try:
-            from app.cabinet.services.email_template_overrides import get_rendered_override
+            raise ImportError('Cabinet removed')
 
             cred_rendered = await get_rendered_override(
                 NotificationType.GUEST_CABINET_CREDENTIALS.value, language, context

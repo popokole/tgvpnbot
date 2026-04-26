@@ -22,7 +22,7 @@ from app.handlers.admin.messages import (
 
 
 if TYPE_CHECKING:
-    from app.cabinet.services.email_service import EmailService
+    pass  # Cabinet removed
 
 
 logger = structlog.get_logger(__name__)

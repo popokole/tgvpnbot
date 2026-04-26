@@ -3,8 +3,6 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Cabinet (Personal Account) routes
-from app.cabinet.routes import router as cabinet_router
 from app.config import settings
 from app.webapi.docs import add_redoc_endpoint
 
@@ -276,9 +274,5 @@ def create_web_api_app() -> FastAPI:
         prefix='/ban-notifications',
         tags=['ban-notifications'],
     )
-
-    # Cabinet (Personal Account) routes
-    if settings.is_cabinet_enabled():
-        app.include_router(cabinet_router)
 
     return app

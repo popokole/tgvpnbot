@@ -14,6 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database.crud.subscription import extend_subscription
+
+
+async def notify_user_subscription_renewed(*a, **kw): pass
+async def notify_user_subscription_activated(*a, **kw): pass
+async def notify_user_devices_purchased(*a, **kw): pass
+async def notify_user_traffic_purchased(*a, **kw): pass
 from app.database.crud.transaction import create_transaction
 from app.database.crud.user import subtract_user_balance
 from app.database.models import Subscription, SubscriptionStatus, TransactionType, User
@@ -407,9 +413,6 @@ async def _auto_extend_subscription(
     *,
     bot: Bot | None = None,
 ) -> bool:
-    # Lazy import to avoid circular dependency
-    from app.cabinet.routes.websocket import notify_user_subscription_renewed
-
     try:
         prepared = await _prepare_auto_extend_context(db, user, cart_data)
     except Exception as error:  # pragma: no cover - defensive logging
@@ -702,11 +705,6 @@ async def _auto_purchase_tariff(
     bot: Bot | None = None,
 ) -> bool:
     """Автоматическая покупка периодного тарифа из сохранённой корзины."""
-    # Lazy imports to avoid circular dependency
-    from app.cabinet.routes.websocket import (
-        notify_user_subscription_activated,
-        notify_user_subscription_renewed,
-    )
     from app.database.crud.server_squad import get_all_server_squads
     from app.database.crud.subscription import (
         create_paid_subscription,
@@ -1072,11 +1070,6 @@ async def _auto_purchase_daily_tariff(
 ) -> bool:
     """Автоматическая покупка суточного тарифа из сохранённой корзины."""
 
-    # Lazy imports to avoid circular dependency
-    from app.cabinet.routes.websocket import (
-        notify_user_subscription_activated,
-        notify_user_subscription_renewed,
-    )
     from app.database.crud.server_squad import get_all_server_squads
     from app.database.crud.subscription import create_paid_subscription, get_subscription_by_user_id
     from app.database.crud.tariff import get_tariff_by_id
@@ -1647,10 +1640,7 @@ async def _auto_add_devices(
         price_kopeks=price_kopeks,
     )
 
-    # WebSocket уведомление для кабинета
     try:
-        from app.cabinet.routes.websocket import notify_user_devices_purchased
-
         await notify_user_devices_purchased(
             user_id=user.id,
             devices_added=devices_to_add,
@@ -1995,10 +1985,7 @@ async def _auto_add_traffic(
         price_kopeks=price_kopeks,
     )
 
-    # WebSocket notification for cabinet
     try:
-        from app.cabinet.routes.websocket import notify_user_traffic_purchased
-
         await notify_user_traffic_purchased(
             user_id=user.id,
             traffic_gb_added=traffic_gb,
@@ -2087,7 +2074,6 @@ async def try_auto_extend_expired_after_topup(
 
     Returns True if the subscription was successfully extended.
     """
-    from app.cabinet.routes.websocket import notify_user_subscription_renewed
     from app.database.crud.subscription import get_subscription_by_user_id
 
     if not user or not getattr(user, 'id', None):
@@ -2453,7 +2439,6 @@ async def try_resume_disabled_daily_after_topup(
 
     Returns True if the subscription was successfully resumed and charged.
     """
-    from app.cabinet.routes.websocket import notify_user_subscription_renewed
     from app.database.crud.subscription import get_subscription_by_user_id, update_daily_charge_time
 
     if not user or not getattr(user, 'id', None):
@@ -3011,12 +2996,6 @@ async def _process_legacy_generic_cart(
     bot: Bot | None = None,
 ) -> bool:
     """Handle old-style carts without an explicit cart_mode (generic FSM carts)."""
-    # Lazy imports to avoid circular dependency
-    from app.cabinet.routes.websocket import (
-        notify_user_subscription_activated,
-        notify_user_subscription_renewed,
-    )
-
     try:
         prepared = await _prepare_auto_purchase(db, user, cart_data)
     except PurchaseValidationError as error:

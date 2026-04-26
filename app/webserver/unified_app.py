@@ -8,7 +8,6 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.cabinet.routes import router as cabinet_router
 from app.config import settings
 from app.services.disposable_email_service import disposable_email_service
 from app.services.payment_service import PaymentService
@@ -60,30 +59,6 @@ def _create_base_app() -> FastAPI:
             openapi_url=docs_config.get('openapi_url'),
             title='Bedolaga Unified Server',
         )
-
-        # Add cabinet routes even when web API is disabled
-        if settings.is_cabinet_enabled():
-            from fastapi.middleware.cors import CORSMiddleware
-
-            cabinet_origins = settings.get_cabinet_allowed_origins()
-            if '*' in cabinet_origins:
-                logger.warning('CORS wildcard with credentials is insecure, disabling credentials for wildcard')
-                app.add_middleware(
-                    CORSMiddleware,
-                    allow_origins=['*'],
-                    allow_credentials=False,
-                    allow_methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-                    allow_headers=['Authorization', 'Content-Type', 'X-CSRF-Token', 'X-Telegram-Init-Data'],
-                )
-            else:
-                app.add_middleware(
-                    CORSMiddleware,
-                    allow_origins=cabinet_origins,
-                    allow_credentials=True,
-                    allow_methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-                    allow_headers=['Authorization', 'Content-Type', 'X-CSRF-Token', 'X-Telegram-Init-Data'],
-                )
-            app.include_router(cabinet_router)
 
     _attach_docs_alias(app, app.docs_url)
     return app

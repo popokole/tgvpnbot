@@ -106,30 +106,15 @@ class NotificationDeliveryService:
 
     @property
     def email_service(self):
-        """Lazy load email service."""
-        if self._email_service is None:
-            from app.cabinet.services.email_service import email_service
-
-            self._email_service = email_service
-        return self._email_service
+        return None
 
     @property
     def email_templates(self):
-        """Lazy load email templates."""
-        if self._email_templates is None:
-            from app.cabinet.services.email_templates import EmailNotificationTemplates
-
-            self._email_templates = EmailNotificationTemplates()
-        return self._email_templates
+        return None
 
     @property
     def ws_manager(self):
-        """Lazy load WebSocket manager."""
-        if self._ws_manager is None:
-            from app.cabinet.routes.websocket import cabinet_ws_manager
-
-            self._ws_manager = cabinet_ws_manager
-        return self._ws_manager
+        return None
 
     async def send_notification(
         self,
@@ -270,18 +255,7 @@ class NotificationDeliveryService:
 
             # Try DB override (get_rendered_override substitutes context vars and wraps in base template)
             template = None
-            try:
-                from app.cabinet.services.email_template_overrides import get_rendered_override
-
-                rendered = await get_rendered_override(notification_type.value, language, context)
-                if rendered:
-                    subject, body_html = rendered
-                    template = {
-                        'subject': subject,
-                        'body_html': body_html,
-                    }
-            except Exception as e:
-                logger.debug('Не удалось проверить override шаблона', e=e)
+            template = None
 
             if not template:
                 template = self.email_templates.get_template(notification_type, language, context)
