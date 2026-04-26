@@ -81,7 +81,7 @@ class PaymentService(
 
     def __init__(self, bot: Bot | None = None) -> None:
         self.bot = bot
-        self.yookassa_service = YooKassaService() if settings.is_yookassa_enabled() else None
+        self.yookassa_service = YooKassaService(bot_username_for_default_return=settings.BOT_USERNAME) if settings.is_yookassa_enabled() else None
 
         logger.debug(
             'PaymentService инициализирован (только YooKassa)',
