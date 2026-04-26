@@ -607,138 +607,24 @@ async def handle_topup_amount_callback(
 
 def register_balance_handlers(dp: Dispatcher):
     dp.callback_query.register(show_balance_menu, F.data == 'menu_balance')
-
     dp.callback_query.register(show_balance_history, F.data == 'balance_history')
-
     dp.callback_query.register(handle_balance_history_pagination, F.data.startswith('balance_history_page_'))
-
     dp.callback_query.register(show_payment_methods, F.data == 'balance_topup')
 
-    from .stars import start_stars_payment
-
-    dp.callback_query.register(start_stars_payment, F.data == 'topup_stars')
-
-    from .yookassa import start_yookassa_payment
+    from .yookassa import (
+        check_yookassa_payment_status,
+        start_yookassa_payment,
+        start_yookassa_sbp_payment,
+    )
 
     dp.callback_query.register(start_yookassa_payment, F.data == 'topup_yookassa')
-
-    from .yookassa import start_yookassa_sbp_payment
-
     dp.callback_query.register(start_yookassa_sbp_payment, F.data == 'topup_yookassa_sbp')
-
-    from .mulenpay import start_mulenpay_payment
-
-    dp.callback_query.register(start_mulenpay_payment, F.data == 'topup_mulenpay')
-
-    from .wata import start_wata_payment
-
-    dp.callback_query.register(start_wata_payment, F.data == 'topup_wata')
-
-    from .pal24 import start_pal24_payment
-
-    dp.callback_query.register(start_pal24_payment, F.data == 'topup_pal24')
-    from .pal24 import handle_pal24_method_selection
-
-    dp.callback_query.register(
-        handle_pal24_method_selection,
-        F.data.startswith('pal24_method_'),
-    )
-
-    from .platega import handle_platega_method_selection, start_platega_direct_method, start_platega_payment
-
-    dp.callback_query.register(start_platega_payment, F.data == 'topup_platega')
-    dp.callback_query.register(
-        handle_platega_method_selection,
-        F.data.startswith('platega_method_'),
-    )
-    dp.callback_query.register(
-        start_platega_direct_method,
-        F.data.regexp(r'^topup_platega_m\d+$'),
-    )
-
-    from .yookassa import check_yookassa_payment_status
-
     dp.callback_query.register(check_yookassa_payment_status, F.data.startswith('check_yookassa_'))
-
-    from .tribute import start_tribute_payment
-
-    dp.callback_query.register(start_tribute_payment, F.data == 'topup_tribute')
 
     dp.callback_query.register(request_support_topup, F.data == 'topup_support')
-
-    from .yookassa import check_yookassa_payment_status
-
-    dp.callback_query.register(check_yookassa_payment_status, F.data.startswith('check_yookassa_'))
-
     dp.message.register(process_topup_amount, BalanceStates.waiting_for_amount)
-
-    from .cryptobot import start_cryptobot_payment
-
-    dp.callback_query.register(start_cryptobot_payment, F.data == 'topup_cryptobot')
-
-    from .cryptobot import check_cryptobot_payment_status
-
-    dp.callback_query.register(check_cryptobot_payment_status, F.data.startswith('check_cryptobot_'))
-
-    from .heleket import check_heleket_payment_status, start_heleket_payment
-
-    dp.callback_query.register(start_heleket_payment, F.data == 'topup_heleket')
-    dp.callback_query.register(check_heleket_payment_status, F.data.startswith('check_heleket_'))
-
-    from .cloudpayments import start_cloudpayments_payment
-
-    dp.callback_query.register(start_cloudpayments_payment, F.data == 'topup_cloudpayments')
-
-    from .freekassa import (
-        start_freekassa_card_topup,
-        start_freekassa_sbp_topup,
-        start_freekassa_topup,
-    )
-
-    dp.callback_query.register(start_freekassa_topup, F.data == 'topup_freekassa')
-    dp.callback_query.register(start_freekassa_sbp_topup, F.data == 'topup_freekassa_sbp')
-    dp.callback_query.register(start_freekassa_card_topup, F.data == 'topup_freekassa_card')
-
-    from .kassa_ai import (
-        start_kassa_ai_card_topup,
-        start_kassa_ai_sberpay_topup,
-        start_kassa_ai_sbp_topup,
-        start_kassa_ai_topup,
-    )
-
-    dp.callback_query.register(start_kassa_ai_topup, F.data == 'topup_kassa_ai')
-    dp.callback_query.register(start_kassa_ai_sbp_topup, F.data == 'topup_kassa_ai_sbp')
-    dp.callback_query.register(start_kassa_ai_card_topup, F.data == 'topup_kassa_ai_card')
-    dp.callback_query.register(start_kassa_ai_sberpay_topup, F.data == 'topup_kassa_ai_sberpay')
-
-    from .riopay import start_riopay_topup
-
-    dp.callback_query.register(start_riopay_topup, F.data == 'topup_riopay')
-
-    from .severpay import start_severpay_topup
-
-    dp.callback_query.register(start_severpay_topup, F.data == 'topup_severpay')
-
-    from .mulenpay import check_mulenpay_payment_status
-
-    dp.callback_query.register(check_mulenpay_payment_status, F.data.startswith('check_mulenpay_'))
-
-    from .wata import check_wata_payment_status
-
-    dp.callback_query.register(check_wata_payment_status, F.data.startswith('check_wata_'))
-
-    from .pal24 import check_pal24_payment_status
-
-    dp.callback_query.register(check_pal24_payment_status, F.data.startswith('check_pal24_'))
-
-    from .platega import check_platega_payment_status
-
-    dp.callback_query.register(check_platega_payment_status, F.data.startswith('check_platega_'))
-
     dp.callback_query.register(handle_payment_methods_unavailable, F.data == 'payment_methods_unavailable')
-
     dp.callback_query.register(handle_topup_amount_callback, F.data.startswith('topup_amount|'))
-
     dp.callback_query.register(handle_saved_cards_list, F.data == 'saved_cards_list')
     dp.callback_query.register(handle_unlink_card, F.data.startswith('unlink_card_'))
     dp.callback_query.register(handle_confirm_unlink, F.data.startswith('confirm_unlink_'))
