@@ -170,9 +170,8 @@ async def setup_bot() -> tuple[Bot, Dispatcher]:
     dp.callback_query.middleware(SubscriptionStatusMiddleware())
     dp.pre_checkout_query.middleware(SubscriptionStatusMiddleware())
     start.register_handlers(dp)
-    menu.register_handlers(dp)
-    subscription.register_handlers(dp)
     if settings.MAIN_MENU_MODE == 'lipton':
+        # Регистрируем ДО menu.register_handlers чтобы back_to_menu не перехватывался старым хендлером
         from app.handlers.lipton_menu import register_lipton_menu_handlers
         from app.handlers.lipton_support import register_lipton_support_handlers
         from app.handlers.lipton_trial import register_lipton_trial_handlers
@@ -181,6 +180,8 @@ async def setup_bot() -> tuple[Bot, Dispatcher]:
         register_lipton_trial_handlers(dp)
     else:
         balance.register_balance_handlers(dp)
+    menu.register_handlers(dp)
+    subscription.register_handlers(dp)
     promocode.register_handlers(dp)
     referral.register_handlers(dp)
     support.register_handlers(dp)

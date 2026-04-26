@@ -72,10 +72,13 @@ def _build_menu_content(sub, user, name: str):
 # Главное меню
 # ---------------------------------------------------------------------------
 
-async def send_lipton_main_menu(message: types.Message, db: AsyncSession, user) -> None:
+async def send_lipton_main_menu(message: types.Message, db: AsyncSession, user, name: str | None = None) -> None:
     """Вызывается из cmd_start когда MAIN_MENU_MODE=lipton; user уже загружен."""
     sub = await get_active_subscription_by_user_id(db, user.id)
-    text, keyboard = _build_menu_content(sub, user, message.from_user.first_name or 'Привет')
+    display_name = name or getattr(user, 'first_name', None) or (
+        message.from_user.first_name if message.from_user else None
+    ) or 'Привет'
+    text, keyboard = _build_menu_content(sub, user, display_name)
     await message.answer(text, reply_markup=keyboard, parse_mode='HTML')
 
 

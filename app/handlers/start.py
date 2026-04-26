@@ -1523,6 +1523,13 @@ async def complete_registration_from_callback(callback: types.CallbackQuery, sta
             )
 
         pinned_message = await get_active_pinned_message(db)
+
+        if settings.MAIN_MENU_MODE == 'lipton':
+            from app.handlers.lipton_menu import send_lipton_main_menu
+            await send_lipton_main_menu(callback.message, db, existing_user, name=callback.from_user.first_name)
+            await state.clear()
+            return
+
         try:
             keyboard = await get_main_menu_keyboard_async(
                 db=db,
@@ -1842,6 +1849,13 @@ async def complete_registration(message: types.Message, state: FSMContext, db: A
             )
 
         pinned_message = await get_active_pinned_message(db)
+
+        if settings.MAIN_MENU_MODE == 'lipton':
+            from app.handlers.lipton_menu import send_lipton_main_menu
+            await send_lipton_main_menu(message, db, existing_user)
+            await state.clear()
+            return
+
         try:
             keyboard = await get_main_menu_keyboard_async(
                 db=db,
@@ -2105,52 +2119,56 @@ async def complete_registration(message: types.Message, state: FSMContext, db: A
             telegram_id=user.telegram_id,
         )
 
-        user_subs_menu = getattr(user, 'subscriptions', None) or []
-        first_sub_menu = next((s for s in user_subs_menu if s.is_active), user_subs_menu[0] if user_subs_menu else None)
-        has_active_subscription, subscription_is_active = _calculate_subscription_flags(first_sub_menu)
+        if settings.MAIN_MENU_MODE == 'lipton':
+            from app.handlers.lipton_menu import send_lipton_main_menu
+            await send_lipton_main_menu(message, db, user)
+        else:
+            user_subs_menu = getattr(user, 'subscriptions', None) or []
+            first_sub_menu = next((s for s in user_subs_menu if s.is_active), user_subs_menu[0] if user_subs_menu else None)
+            has_active_subscription, subscription_is_active = _calculate_subscription_flags(first_sub_menu)
 
-        menu_text = await get_main_menu_text(user, texts, db)
+            menu_text = await get_main_menu_text(user, texts, db)
 
-        is_admin = settings.is_admin(user.telegram_id)
-        is_moderator = (not is_admin) and SupportSettingsService.is_moderator(user.telegram_id)
+            is_admin = settings.is_admin(user.telegram_id)
+            is_moderator = (not is_admin) and SupportSettingsService.is_moderator(user.telegram_id)
 
-        custom_buttons = []
-        if not settings.is_text_main_menu_mode():
-            custom_buttons = await MainMenuButtonService.get_buttons_for_user(
-                db,
-                is_admin=is_admin,
-                has_active_subscription=has_active_subscription,
-                subscription_is_active=subscription_is_active,
-            )
+            custom_buttons = []
+            if not settings.is_text_main_menu_mode():
+                custom_buttons = await MainMenuButtonService.get_buttons_for_user(
+                    db,
+                    is_admin=is_admin,
+                    has_active_subscription=has_active_subscription,
+                    subscription_is_active=subscription_is_active,
+                )
 
-        try:
-            keyboard = await get_main_menu_keyboard_async(
-                db=db,
-                user=user,
-                language=user.language,
-                is_admin=is_admin,
-                has_had_paid_subscription=user.has_had_paid_subscription,
-                has_active_subscription=has_active_subscription,
-                subscription_is_active=subscription_is_active,
-                balance_kopeks=user.balance_kopeks,
-                subscription=first_sub_menu,
-                is_moderator=is_moderator,
-                custom_buttons=custom_buttons,
-            )
-            if pinned_message and pinned_message.send_before_menu:
-                await _send_pinned_message(message.bot, db, user, pinned_message)
-            await message.answer(menu_text, reply_markup=keyboard, parse_mode='HTML')
-            logger.info('✅ Главное меню показано пользователю', telegram_id=user.telegram_id)
-            if pinned_message and not pinned_message.send_before_menu:
-                await _send_pinned_message(message.bot, db, user, pinned_message)
-        except Exception as e:
-            logger.error('Ошибка при показе главного меню', error=e)
-            await message.answer(
-                texts.t(
-                    'WELCOME_FALLBACK',
-                    'Добро пожаловать, {user_name}!',
-                ).format(user_name=html.escape(user.full_name or ''))
-            )
+            try:
+                keyboard = await get_main_menu_keyboard_async(
+                    db=db,
+                    user=user,
+                    language=user.language,
+                    is_admin=is_admin,
+                    has_had_paid_subscription=user.has_had_paid_subscription,
+                    has_active_subscription=has_active_subscription,
+                    subscription_is_active=subscription_is_active,
+                    balance_kopeks=user.balance_kopeks,
+                    subscription=first_sub_menu,
+                    is_moderator=is_moderator,
+                    custom_buttons=custom_buttons,
+                )
+                if pinned_message and pinned_message.send_before_menu:
+                    await _send_pinned_message(message.bot, db, user, pinned_message)
+                await message.answer(menu_text, reply_markup=keyboard, parse_mode='HTML')
+                logger.info('✅ Главное меню показано пользователю', telegram_id=user.telegram_id)
+                if pinned_message and not pinned_message.send_before_menu:
+                    await _send_pinned_message(message.bot, db, user, pinned_message)
+            except Exception as e:
+                logger.error('Ошибка при показе главного меню', error=e)
+                await message.answer(
+                    texts.t(
+                        'WELCOME_FALLBACK',
+                        'Добро пожаловать, {user_name}!',
+                    ).format(user_name=html.escape(user.full_name or ''))
+                )
 
     logger.info('✅ Регистрация завершена для пользователя', telegram_id=user.telegram_id)
 
