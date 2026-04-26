@@ -23,7 +23,7 @@ def get_main_menu_keyboard(has_subscription: bool = False, is_admin: bool = Fals
         [InlineKeyboardButton(text='💬 Поддержка',      callback_data='show_support')],
     ])
     if is_admin:
-        buttons.append([InlineKeyboardButton(text='⚙️ Админ-панель', callback_data='admin_menu')])
+        buttons.append([InlineKeyboardButton(text='⚙️ Админ-панель', callback_data='admin_panel')])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
